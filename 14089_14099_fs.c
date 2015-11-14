@@ -79,3 +79,13 @@ int createSFS(char* filename,int nbytes)
 	set_bit(&inode_bitmap,i);
 	return i;
 }
+
+void print_inodeBitmaps(int fileSystemId)
+{
+	return check_bit(&inode_bitmap,fileSystemId);
+}
+
+void print_dataBitmaps(int fileSystemId)
+{
+	return check_bit(&data_bitmap,fileSystemId);
+}
