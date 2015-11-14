@@ -74,8 +74,8 @@ int writeData(int disk, int blockNum, void* block)
 int createSFS(char* filename,int nbytes)
 {
 	int i;
-	while(!check_bit(inode_bitmap,i) && i < BLK_SIZE*8) i++;
+	while(!check_bit(&inode_bitmap,i) && i < BLK_SIZE*8) i++;
 	if(i == BLK_SIZE*8) return -1;
-	set_bit(inode_bitmap,i);
+	set_bit(&inode_bitmap,i);
 	return i;
 }
