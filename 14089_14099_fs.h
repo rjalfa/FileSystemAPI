@@ -41,4 +41,6 @@ void print_inodeBitmaps(int fileSystemId);
 void print_dataBitmaps(int fileSystemId);
 void print_FileList(int fileSystemId);
 
+//Support Functions
+void print_bits(unsigned int x);
 #endif

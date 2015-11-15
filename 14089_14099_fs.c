@@ -28,6 +28,15 @@ int check_bit(bitmap *b,int i)
 }
 
 */// File System APIs
+
+void print_bits(unsigned int x)
+{
+    int i;
+    for(i=8*sizeof(x)-1; i>=0; i--) {
+        (x & (1 << i)) ? putchar('1') : putchar('0');
+    }
+}
+
 int readData(int disk, int blockNum, void* block)
 {
 	lseek(disk,blockNum*BLK_SIZE,SEEK_SET);
@@ -56,17 +65,19 @@ int createSFS(char* filename,int nbytes)
 void print_inodeBitmaps(int fileSystemId)
 {
 	void* buf = calloc(BLK_SIZE,1);
-	assert(readData(fileSystemId,0,buf) == BLK_SIZE);
-	/*char* b = (char*) buf;
-	printf("%ld",strlen(buf));
-	for(i = 0;i < sizeof(b)/sizeof(int);i++) printf("%d\n",b[i]);*/
+	assert(readData(fileSystemId,INODE_BLK,buf) == BLK_SIZE);
 	int i;
-	for (i = 0; i < BLK_SIZE; i++) {
- 		printf("%x", ((unsigned char *) buf) [i]);
+	for (i = 0; i < BLK_SIZE/sizeof(int); i++) {
+ 		print_bits(((int *) buf) [i]);
 	}
 }
 
 void print_dataBitmaps(int fileSystemId)
 {
-	///return check_bit(&data_bitmap,fileSystemId);
+	void* buf = calloc(BLK_SIZE,1);
+	assert(readData(fileSystemId,BITMAP_BLK,buf) == BLK_SIZE);
+	int i;
+	for (i = 0; i < BLK_SIZE/sizeof(int); i++) {
+ 		print_bits(((int *) buf) [i]);
+	}
 }
