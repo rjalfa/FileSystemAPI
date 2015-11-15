@@ -30,6 +30,7 @@ typedef struct _inode
 } inode;
 
 inode* generateInode(char* buffer);
+void* dumpInode(inode* a);
 
 /*typedef struct _bitmap
 {

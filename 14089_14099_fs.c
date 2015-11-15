@@ -37,12 +37,23 @@ inode* generateInode(char* buffer)
 	int i;
 	for(i=0;i<8;i++) a->name[i] = buf[i];
 	a->name[i] = '\0';
-	a->nblocks = buf[i+1] << 8 + buf[i+2];
+	a->nblocks = (buf[i] << 8) + buf[i+1];
 	i+=2;
-	a->first_blk = buf[i+1] << 8 + buf[i+2];
+	a->first_blk = (buf[i] << 8) + buf[i+1];
 	i+=2;
-	a->file_size = buf[i+1] << 24 + buf[i+2] << 16 + buf[i+3] << 8 + buf[i+4];
+	a->file_size = (buf[i] << 24) + (buf[i+1] << 16) + (buf[i+2] << 8) + buf[i+3];
 	return a;
+}
+
+void* dumpInode(inode* a)
+{
+	void* buf = calloc(16,1);
+	int i;
+	for(i=0;i<strlen(a->name);i++) ((unsigned char*)buf)[i] = a->name[i];
+	((unsigned short*)buf)[4] = a->nblocks;
+	((unsigned short*)buf)[5] = a->first_blk;
+	((unsigned int*)buf)[3] = a->file_size;
+	return (void*)buf;
 }
 
 // File System APIs
