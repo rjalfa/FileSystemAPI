@@ -16,10 +16,14 @@ unsigned int BLK_SIZE;
 unsigned int INODE_SIZE;
 unsigned int BITMAP_SIZE;
 unsigned int INODES_PER_BLOCK;
-unsigned int MIN_DISK_SIZE; 
+unsigned int DISK_SIZE; 
 
 //Data Structures
 
+/*
+	Super Block layout: Block Size | Inode Size | Bitmap Size | Inodes_per_block | Disk_size
+*/
+	
 /*Inode - 16 Bytes
  * [0-7] = Name
  * [8-9] = No. of blocks
@@ -34,7 +38,7 @@ typedef struct _inode
 	unsigned int file_size;
 } inode;
 
-inode* generateInode(char* buffer);
+inode* generateInode(void* buffer);
 void* dumpInode(inode* a);
 
 typedef struct _bitmap
@@ -67,4 +71,5 @@ void print_FileList(int fileSystemId);
 
 //Support Functions
 void print_bits(unsigned int x);
+void loadSuperBlock(int fileSystemId);
 #endif

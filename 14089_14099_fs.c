@@ -1,6 +1,4 @@
 #include "14089_14099_fs.h"
-unsigned int BLK_SIZE = 4096;
-unsigned int INODE_SIZE = 16;
 //Bitmap Manipulation
 void loadBitmap(bitmap* b,int blk,int disk)
 {
@@ -29,13 +27,11 @@ int check_bit(bitmap *b,int i)
 }
 
 //Data Sturctures
-inode* generateInode(char* buffer)
+inode* generateInode(void* buf)
 {
-	unsigned char* buf = (unsigned char*) buffer;
 	inode* a = (inode*)malloc(sizeof(inode));
 	int i;
 	memcpy(a->name,buf,8);
-	for(i=0;i<8;i++) a->name[i] = buf[i];
 	memcpy(&(a->nblocks),buf+8,sizeof(a->nblocks));
 	memcpy(&(a->first_blk),buf+10,sizeof(a->first_blk));
 	memcpy(&(a->file_size),buf+12,sizeof(a->file_size));
@@ -63,6 +59,19 @@ void print_bits(unsigned int x)
     }
 }
 
+/*
+	Super Block layout: Block Size | Inode Size | Bitmap Size | Inodes_per_block | Disk_size
+*/
+void loadSuperBlock(int fileSystemId)
+{
+	lseek(fileSystemId,0,SEEK_SET);
+	read(fileSystemId,&BLK_SIZE,sizeof(BLK_SIZE));
+	read(fileSystemId,&INODE_SIZE,sizeof(INODE_SIZE));
+	read(fileSystemId,&BITMAP_SIZE,sizeof(BITMAP_SIZE));
+	read(fileSystemId,&INODES_PER_BLOCK,sizeof(INODES_PER_BLOCK));
+	read(fileSystemId,&DISK_SIZE,sizeof(DISK_SIZE));
+}
+
 int readInode(int disk,int inodeNum,inode* Inode)
 {
 	int blockNum = INODE_BLK_ST+(inodeNum / INODES_PER_BLOCK);
@@ -76,6 +85,7 @@ int readInode(int disk,int inodeNum,inode* Inode)
 
 int readData(int disk, int blockNum, void* block)
 {
+	errno = 0;
 	lseek(disk,blockNum*BLK_SIZE,SEEK_SET);
 	if(errno) return -1;
 	int ret = read(disk,block,BLK_SIZE);
@@ -84,6 +94,7 @@ int readData(int disk, int blockNum, void* block)
 
 int writeData(int disk, int blockNum, void* block)
 {
+	errno = 0;
 	lseek(disk,blockNum*BLK_SIZE,SEEK_SET);
 	if(errno) return -1;
 	int ret = write(disk,block,BLK_SIZE);
@@ -92,14 +103,28 @@ int writeData(int disk, int blockNum, void* block)
 
 int createSFS(char* filename,int nbytes)
 {
-	int fd = open(filename,O_RDWR | O_CREAT,S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-	if(fd < 0) return -1;
-	lseek(fd,0,SEEK_SET);
-	write(fd,(void*)calloc(nbytes,1),nbytes);
-	BITMAP_SIZE = BLK_SIZE*8;
-	INODES_PER_BLOCK = BLK_SIZE/INODE_SIZE;
-	MIN_DISK_SIZE = INODE_BLK_ST+BITMAP_SIZE/INODES_PER_BLOCK; 
-	return fd;
+	int fileSystemId = open(filename,O_RDWR);
+	if(fileSystemId < 0) 
+	{
+		fileSystemId = open(filename,O_RDWR | O_CREAT,S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
+		if(fileSystemId < 0) return -1;
+		lseek(fileSystemId,0,SEEK_SET);
+		write(fileSystemId,(void*)calloc(nbytes,1),nbytes);
+		BLK_SIZE = 4096;
+		INODE_SIZE = 16;
+		BITMAP_SIZE = BLK_SIZE*8;
+		INODES_PER_BLOCK = BLK_SIZE/INODE_SIZE;
+		DISK_SIZE = nbytes;
+		lseek(fileSystemId,0,SEEK_SET);
+		write(fileSystemId,&BLK_SIZE,sizeof(BLK_SIZE));
+		write(fileSystemId,&INODE_SIZE,sizeof(INODE_SIZE));
+		write(fileSystemId,&BITMAP_SIZE,sizeof(BITMAP_SIZE));
+		write(fileSystemId,&INODES_PER_BLOCK,sizeof(INODES_PER_BLOCK));
+		write(fileSystemId,&DISK_SIZE,sizeof(DISK_SIZE)); 
+	}
+	else loadSuperBlock(fileSystemId);
+	if(BLK_SIZE == 0) {printf("Invalid File System!");return -1;}
+	return fileSystemId;
 }
 
 void print_inodeBitmaps(int fileSystemId)
