@@ -27,7 +27,25 @@ int check_bit(bitmap *b,int i)
 	return (b->bit_array[i/8] & (1 << i%8)) != 0;	
 }
 
-*/// File System APIs
+*/
+
+//Data Sturctures
+inode* generateInode(char* buffer)
+{
+	unsigned char* buf = (unsigned char*) buffer;
+	inode* a = (inode*)malloc(sizeof(inode));
+	int i;
+	for(i=0;i<8;i++) a->name[i] = buf[i];
+	a->name[i] = '\0';
+	a->nblocks = buf[i+1] << 8 + buf[i+2];
+	i+=2;
+	a->first_blk = buf[i+1] << 8 + buf[i+2];
+	i+=2;
+	a->file_size = buf[i+1] << 24 + buf[i+2] << 16 + buf[i+3] << 8 + buf[i+4];
+	return a;
+}
+
+// File System APIs
 
 void print_bits(unsigned int x)
 {
@@ -65,7 +83,7 @@ int createSFS(char* filename,int nbytes)
 void print_inodeBitmaps(int fileSystemId)
 {
 	void* buf = calloc(BLK_SIZE,1);
-	assert(readData(fileSystemId,INODE_BLK,buf) == BLK_SIZE);
+	assert(readData(fileSystemId,INODE_BITMAP_BLK,buf) == BLK_SIZE);
 	int i;
 	for (i = 0; i < BLK_SIZE/sizeof(int); i++) {
  		print_bits(((int *) buf) [i]);
@@ -75,7 +93,7 @@ void print_inodeBitmaps(int fileSystemId)
 void print_dataBitmaps(int fileSystemId)
 {
 	void* buf = calloc(BLK_SIZE,1);
-	assert(readData(fileSystemId,BITMAP_BLK,buf) == BLK_SIZE);
+	assert(readData(fileSystemId,DATA_BITMAP_BLK,buf) == BLK_SIZE);
 	int i;
 	for (i = 0; i < BLK_SIZE/sizeof(int); i++) {
  		print_bits(((int *) buf) [i]);

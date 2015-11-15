@@ -10,10 +10,27 @@
 #include <errno.h>
 #define BLK_SIZE 512
 #define SUPER_BLK 0
-#define BITMAP_BLK 1
-#define INODE_BLK 2
-
+#define DATA_BITMAP_BLK 1
+#define INODE_BITMAP_BLK 2
+#define INODE_BLK_ST 3
 //Data Structures
+
+/*Inode - 16 Bytes
+ * [0-7] = Name
+ * [8-9] = No. of blocks
+ * [10-11] = First block
+ * [12-15] = Size of file
+ */
+typedef struct _inode
+{
+	char name[9];
+	unsigned short nblocks;
+	unsigned short first_blk;
+	unsigned int file_size;
+} inode;
+
+inode* generateInode(char* buffer);
+
 /*typedef struct _bitmap
 {
 	char* bit_array;	
@@ -28,6 +45,7 @@ void set_bit(bitmap *b,int i);
 void unset_bit(bitmap *b,int i);
 int check_bit(bitmap *b,int i);
 */
+
 //File System APIs
 int createSFS(char* filename, int nbytes);
 int readData(int disk, int blockNum, void* block);
