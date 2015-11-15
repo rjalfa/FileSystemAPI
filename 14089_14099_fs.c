@@ -34,13 +34,11 @@ inode* generateInode(char* buffer)
 	unsigned char* buf = (unsigned char*) buffer;
 	inode* a = (inode*)malloc(sizeof(inode));
 	int i;
+	memcpy(a->name,buf,8);
 	for(i=0;i<8;i++) a->name[i] = buf[i];
-	a->name[i] = '\0';
-	a->nblocks = (buf[i] << 8) + buf[i+1];
-	i+=2;
-	a->first_blk = (buf[i] << 8) + buf[i+1];
-	i+=2;
-	a->file_size = (buf[i] << 24) + (buf[i+1] << 16) + (buf[i+2] << 8) + buf[i+3];
+	memcpy(&(a->nblocks),buf+8,sizeof(a->nblocks));
+	memcpy(&(a->first_blk),buf+10,sizeof(a->first_blk));
+	memcpy(&(a->file_size),buf+12,sizeof(a->file_size));
 	return a;
 }
 
@@ -48,10 +46,10 @@ void* dumpInode(inode* a)
 {
 	void* buf = calloc(16,1);
 	int i;
-	for(i=0;i<strlen(a->name);i++) ((unsigned char*)buf)[i] = a->name[i];
-	((unsigned short*)buf)[4] = a->nblocks;
-	((unsigned short*)buf)[5] = a->first_blk;
-	((unsigned int*)buf)[3] = a->file_size;
+	memcpy(buf,a->name,8);
+	memcpy(buf+8,&(a->nblocks),sizeof(a->nblocks));
+	memcpy(buf+10,&(a->first_blk),sizeof(a->first_blk));
+	memcpy(buf+12,&(a->file_size),sizeof(a->file_size));
 	return (void*)buf;
 }
 
