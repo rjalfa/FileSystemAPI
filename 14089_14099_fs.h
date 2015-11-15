@@ -7,13 +7,14 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <unistd.h>
-#define BLK_SIZE 4096
+#include <errno.h>
+#define BLK_SIZE 512
 #define SUPER_BLK 0
 #define BITMAP_BLK 1
 #define INODE_BLK 2
 
 //Data Structures
-typedef struct _bitmap
+/*typedef struct _bitmap
 {
 	char* bit_array;	
 } bitmap;
@@ -26,7 +27,7 @@ void flushBitmap(bitmap* b,int blk,int disk);
 void set_bit(bitmap *b,int i);
 void unset_bit(bitmap *b,int i);
 int check_bit(bitmap *b,int i);
-
+*/
 //File System APIs
 int createSFS(char* filename, int nbytes);
 int readData(int disk, int blockNum, void* block);
