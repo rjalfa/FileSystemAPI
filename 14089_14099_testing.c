@@ -9,5 +9,5 @@ int main()
 	//set_bit(&inode_bitmap,6);
 	//flushBitmap(&inode_bitmap,INODE_BLK,disk);
 	//loadBitmap(&inode_bitmap,INODE_BLK,disk);
-	print_inodeBitmaps(disk);
+	print_FileList(disk);
 }

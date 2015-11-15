@@ -8,11 +8,16 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#define BLK_SIZE 512
 #define SUPER_BLK 0
 #define DATA_BITMAP_BLK 1
 #define INODE_BITMAP_BLK 2
 #define INODE_BLK_ST 3
+unsigned int BLK_SIZE;
+unsigned int INODE_SIZE;
+unsigned int BITMAP_SIZE;
+unsigned int INODES_PER_BLOCK;
+unsigned int MIN_DISK_SIZE; 
+
 //Data Structures
 
 /*Inode - 16 Bytes
@@ -32,7 +37,7 @@ typedef struct _inode
 inode* generateInode(char* buffer);
 void* dumpInode(inode* a);
 
-/*typedef struct _bitmap
+typedef struct _bitmap
 {
 	char* bit_array;	
 } bitmap;
@@ -45,7 +50,7 @@ void flushBitmap(bitmap* b,int blk,int disk);
 void set_bit(bitmap *b,int i);
 void unset_bit(bitmap *b,int i);
 int check_bit(bitmap *b,int i);
-*/
+
 
 //File System APIs
 int createSFS(char* filename, int nbytes);
