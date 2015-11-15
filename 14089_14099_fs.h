@@ -5,17 +5,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <fcntl.h>
+#include <unistd.h>
 #define BLK_SIZE 4096
 #define SUPER_BLK 0
 #define BITMAP_BLK 1
 #define INODE_BLK 2
-#define PRIMARY_DISK 0
 
 //Data Structures
-FILE* disk_ptr;
-int formatDrive(long long size);
-int bootDisk();
-int shutDown();
 typedef struct _bitmap
 {
 	char* bit_array;	
@@ -24,8 +21,8 @@ typedef struct _bitmap
 bitmap data_bitmap,inode_bitmap;
 
 //Bitmap Manipulation
-void loadBitmap(bitmap* b,int blk);
-void flushBitmap(bitmap* b,int blk);
+void loadBitmap(bitmap* b,int blk,int disk);
+void flushBitmap(bitmap* b,int blk,int disk);
 void set_bit(bitmap *b,int i);
 void unset_bit(bitmap *b,int i);
 int check_bit(bitmap *b,int i);

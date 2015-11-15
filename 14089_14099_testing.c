@@ -3,12 +3,11 @@
 int main()
 {
 	//128 MB Hard Disk with Block size 4 KB
-	formatDrive(32*1024*4*1024);
-	assert(bootDisk()==1);
-	loadBitmap(&inode_bitmap,INODE_BLK);
+	int disk = createSFS("14089_14099_disk.dat",1024*1024*4);
+	printf("%d\n",disk);
+	loadBitmap(&inode_bitmap,INODE_BLK,disk);
 	set_bit(&inode_bitmap,6);
-	flushBitmap(&inode_bitmap,INODE_BLK);
-	loadBitmap(&inode_bitmap,INODE_BLK);
+	flushBitmap(&inode_bitmap,INODE_BLK,disk);
+	loadBitmap(&inode_bitmap,INODE_BLK,disk);
 	printf("%s\n",inode_bitmap.bit_array);
-	return shutDown();
 }
