@@ -23,7 +23,7 @@ unsigned int DISK_SIZE;
 /*
 	Super Block layout: Block Size | Inode Size | Bitmap Size | Inodes_per_block | Disk_size
 */
-	
+
 /*Inode - 16 Bytes
  * [0-7] = Name
  * [8-9] = No. of blocks
@@ -32,13 +32,14 @@ unsigned int DISK_SIZE;
  */
 typedef struct _inode
 {
+	int id;
 	char name[9];
 	unsigned short nblocks;
 	unsigned short first_blk;
 	unsigned int file_size;
 } inode;
 
-inode* generateInode(void* buffer);
+inode* generateInode(void* buffer,int id);
 void* dumpInode(inode* a);
 
 typedef struct _bitmap
