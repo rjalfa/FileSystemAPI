@@ -61,8 +61,8 @@ void print_bits(unsigned int x)
 }
 
 /*
-	Super Block layout: Block Size | Inode Size | Bitmap Size | Inodes_per_block | Disk_size
-*/
+	Super Block layout: Block Size | Inode Size | Bitmap Size | Inodes_per_block | Disk_size | No. of free blocks | No. of free inodes
+ */
 void loadSuperBlock(int fileSystemID)
 {
 	lseek(fileSystemID,0,SEEK_SET);
@@ -71,6 +71,20 @@ void loadSuperBlock(int fileSystemID)
 	read(fileSystemID,&BITMAP_SIZE,sizeof(BITMAP_SIZE));
 	read(fileSystemID,&INODES_PER_BLOCK,sizeof(INODES_PER_BLOCK));
 	read(fileSystemID,&DISK_SIZE,sizeof(DISK_SIZE));
+	read(fileSystemID,&FREE_BLK_CNT,sizeof(FREE_BLK_CNT));
+	read(fileSystemID,&FREE_INODE_CNT,sizeof(FREE_INODE_CNT));
+}
+
+void dumpSuperBlock(int fileSystemID)
+{
+	lseek(fileSystemID,0,SEEK_SET);
+	write(fileSystemID,&BLK_SIZE,sizeof(BLK_SIZE));
+	write(fileSystemID,&INODE_SIZE,sizeof(INODE_SIZE));
+	write(fileSystemID,&BITMAP_SIZE,sizeof(BITMAP_SIZE));
+	write(fileSystemID,&INODES_PER_BLOCK,sizeof(INODES_PER_BLOCK));
+	write(fileSystemID,&DISK_SIZE,sizeof(DISK_SIZE));
+	write(fileSystemID,&FREE_BLK_CNT,sizeof(FREE_BLK_CNT));
+	write(fileSystemID,&FREE_INODE_CNT,sizeof(FREE_INODE_CNT));	
 }
 
 int readInode(int fileSystemID,int inodeNum,inode** Inode)
@@ -136,15 +150,19 @@ int createSFS(char* filename,int nbytes)
 		BITMAP_SIZE = BLK_SIZE*8;
 		INODES_PER_BLOCK = BLK_SIZE/INODE_SIZE;
 		DISK_SIZE = nbytes;
+		FREE_BLK_CNT = DISK_SIZE/BLK_SIZE - 3 - BITMAP_SIZE/INODES_PER_BLOCK;
+		FREE_INODE_CNT = DISK_SIZE/BLK_SIZE;
 		lseek(fileSystemID,0,SEEK_SET);
 		write(fileSystemID,&BLK_SIZE,sizeof(BLK_SIZE));
 		write(fileSystemID,&INODE_SIZE,sizeof(INODE_SIZE));
 		write(fileSystemID,&BITMAP_SIZE,sizeof(BITMAP_SIZE));
 		write(fileSystemID,&INODES_PER_BLOCK,sizeof(INODES_PER_BLOCK));
 		write(fileSystemID,&DISK_SIZE,sizeof(DISK_SIZE));
-		loadBitmap(&data_bitmap,DATA_BITMAP_BLK,fileSystemID);
+		loadBitmap(&data_bitmap,DATA_BITMAP_BLK,fileSystemID);S_PER_BLOCK));
+		write(fileSystemID,&DISK_SIZE,sizeof(DISK_SIZE));
+		write(fileSystemID,&FREE_BLK_CNT,sizeof(FREE_BLK_CNT));
+		write(fileSystemID,&FREE_INODE_CNT,sizeof(FREE_INODE_CNT));
 		for(i=0;i<3+BITMAP_SIZE/INODES_PER_BLOCK;i++) set_bit(&data_bitmap,i);
-
 		flushBitmap(&data_bitmap,DATA_BITMAP_BLK,fileSystemID);
 	}
 	else loadSuperBlock(fileSystemID);
@@ -168,13 +186,17 @@ int readFile(int fileSystemID,char* filename,void* block)
 	else return -1;
 }
 
-int writeFile(int fileSystemID,char* filename,void* block)
+/*int writeFile(int fileSystemID,char* filename,void* block)
 {
+	int i;
 	loadSuperBlock(fileSystemID);
 	loadBitmap(&inode_bitmap,INODE_BITMAP_BLK,fileSystemID);
 	loadBitmap(&data_bitmap,DATA_BITMAP_BLK,fileSystemID);
-	int ret,i,space_free = -1,fs_free = -1,flag = 0;
-	for(i=0;i<BITMAP_SIZE;i++) 
+	int fsize = 0;
+	for(i=0;((unsigned char*)block)[i] != STREAM_DELIM;i++);
+	fsize = i;
+	int ret,space_free = -1,fs_free = -1,flag = 0;
+	for(i=0;i<BITMAP_SIZE;i++)
 	{
 		if(check_bit(&inode_bitmap,i) == 0) if(fs_free == -1) fs_free = i;
 		if(check_bit(&data_bitmap,i) == 0) if(space_free == -1) space_free = i;
@@ -184,9 +206,9 @@ int writeFile(int fileSystemID,char* filename,void* block)
 	inode wrInode;
 	strcpy(wrInode.name,filename);
 	wrInode.id = fs_free;
-	wrInode.nblocks = 1;
+	wrInode.nblocks = ceil(fsize*1.0/(BLK_SIZE-4));
 	wrInode.first_blk = space_free;
-	wrInode.file_size = BLK_SIZE;
+	wrInode.file_size = fsize;
 	set_bit(&inode_bitmap,fs_free);
 	set_bit(&data_bitmap,space_free);
 	if((ret=writeData(fileSystemID,space_free,block)) > 0)
@@ -196,6 +218,53 @@ int writeFile(int fileSystemID,char* filename,void* block)
 		flushBitmap(&data_bitmap,DATA_BITMAP_BLK,fileSystemID);
 	}
 	return ret;
+}*/
+
+int writeFileExisting(int fileSystemID,inode* Inode,void* block)
+{
+	int i = 0;
+	int fsize = 0;
+	for(i=0;((unsigned char*)block)[i] != STREAM_DELIM;i++);
+	fsize = i;
+}
+
+int writeFileNew(int fileSystemID,inode* Inode,void* block)
+{
+	int i = 0;
+	int fsize = 0;
+	for(i=0;((unsigned char*)block)[i] != STREAM_DELIM;i++);
+	fsize = i;
+	int fs_free == -1;
+	for(i=0;i<BITMAP_SIZE;i++)
+	{
+		if(check_bit(&inode_bitmap,i) == 0) if(fs_free == -1) {fs_free = i;break;}
+	}
+	if(fs_free == -1) return -1;
+	inode wrInode;
+	strcpy(wrInode.name,filename);
+	wrInode.id = fs_free;
+	wrInode.nblocks = ceil(fsize*1.0/(BLK_SIZE-4));
+	//wrInode.first_blk = space_free;
+	wrInode.file_size = fsize;
+	set_bit(&inode_bitmap,fs_free);
+
+}
+
+int writeFile(int fileSystemID,char* filename,void* block)
+{
+	int i,flag=0;
+	inode* in;
+	loadSuperBlock(fileSystemID);
+	loadBitmap(&inode_bitmap,INODE_BITMAP_BLK,fileSystemID);
+	loadBitmap(&data_bitmap,DATA_BITMAP_BLK,fileSystemID);
+	for(i=0;i<BITMAP_SIZE;i++) if(check_bit(&inode_bitmap,i)) 
+	{
+		readInode(fileSystemID,i,&in);
+		if(strcmp(in->name,filename)==0) {flag = 1;break;}
+		else free(in);
+	}
+	if(flag) return writeFileExisting(fileSystemID,in,block);
+	else return writeFileNew(fileSystemID,filename,block);
 }
 
 void print_inodeBitmaps(int fileSystemID)

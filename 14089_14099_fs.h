@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#define STREAM_DELIM 0
 #define SUPER_BLK 0
 #define DATA_BITMAP_BLK 1
 #define INODE_BITMAP_BLK 2
@@ -17,7 +18,8 @@ unsigned int INODE_SIZE;
 unsigned int BITMAP_SIZE;
 unsigned int INODES_PER_BLOCK;
 unsigned int DISK_SIZE; 
-
+unsigned int FREE_BLK_CNT;
+unsigned int FREE_INODE_CNT;
 //Data Structures
 
 /*
@@ -73,4 +75,7 @@ void print_FileList(int fileSystemId);
 //Support Functions
 void print_bits(unsigned int x);
 void loadSuperBlock(int fileSystemId);
+void dumpSuperBlock(int fileSystemId);
+int writeFileExisting(int disk,inode* Inode,void* block);
+int writeFileNew(int disk,char* filename,void* block);
 #endif

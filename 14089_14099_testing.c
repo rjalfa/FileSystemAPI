@@ -4,15 +4,15 @@ int main()
 {
 	//128 MB Hard Disk with Block size 4 KB
 	int disk = createSFS("14089_14099_disk.dat",1024*1024*128);
-	print_inodeBitmaps(disk);
+	//print_inodeBitmaps(disk);
 	//loadBitmap(&inode_bitmap,INODE_BLK,disk);
 	//set_bit(&inode_bitmap,6);
 	//flushBitmap(&inode_bitmap,INODE_BLK,disk);
 	//loadBitmap(&inode_bitmap,INODE_BLK,disk);
 	printf("%u,%u,%u,%u,%u\n",BLK_SIZE,INODE_SIZE,BITMAP_SIZE,INODES_PER_BLOCK,DISK_SIZE);
 	void* str = malloc(20);
-	strcpy(str,"hello");
+	//strcpy(str,"hello");
+	printf("%d\n",readFile(disk,"f.out",str));
 	printf("%s\n",(char*)str);
-	printf("%d\n",writeFile(disk,"f.out",str));
 	print_FileList(disk);
 }
