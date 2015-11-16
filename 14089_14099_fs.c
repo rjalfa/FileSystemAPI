@@ -1,4 +1,5 @@
 #include "14089_14099_fs.h"
+#include <math.h>
 //Bitmap Manipulation
 void loadBitmap(bitmap* b,int blk,int fileSystemID)
 {
@@ -101,6 +102,28 @@ int writeInode(int fileSystemID,inode* Inode)
 	return writeData(fileSystemID,blockNum,buf);
 }
 
+int GetBlockArray(int fileSystemID,int nblocks)
+{
+	loadBitmap(&data_bitmap,DATA_BITMAP_BLK,fileSystemID);
+	int i,cnt=0,start;
+	for(i=0;i<BITMAP_SIZE;i++)
+	{
+		if(cnt == nblocks) break;  
+		if(check_bit(&data_bitmap,i))
+		{
+			cnt = 0;
+			start = -1;
+		}
+		else
+		{
+			if(start == -1) start = i;
+			cnt++;
+		}
+	}
+	if(cnt == nblocks) return start;
+	return -1;
+}
+
 int readData(int fileSystemID, int blockNum, void* block)
 {
 	loadSuperBlock(fileSystemID);
@@ -164,7 +187,11 @@ int readFile(int fileSystemID,char* filename,void* block)
 		if(strcmp(in->name,filename)==0) {flag = 1;break;}
 		else free(in);
 	}
-	if(flag) return readData(fileSystemID,in->first_blk,block);
+	if(flag) 
+	{
+		lseek(fileSystemID,in->first_blk*BLK_SIZE,SEEK_SET);
+		return read(fileSystemID,block,in->file_size);
+	}
 	else return -1;
 }
 
@@ -172,26 +199,30 @@ int writeFile(int fileSystemID,char* filename,void* block)
 {
 	loadSuperBlock(fileSystemID);
 	loadBitmap(&inode_bitmap,INODE_BITMAP_BLK,fileSystemID);
-	loadBitmap(&data_bitmap,DATA_BITMAP_BLK,fileSystemID);
 	int ret,i,space_free = -1,fs_free = -1,flag = 0;
 	for(i=0;i<BITMAP_SIZE;i++) 
 	{
 		if(check_bit(&inode_bitmap,i) == 0) if(fs_free == -1) fs_free = i;
-		if(check_bit(&data_bitmap,i) == 0) if(space_free == -1) space_free = i;
-		if(space_free != -1 && fs_free != -1) {flag = 1;break;}
+		if(fs_free != -1) {flag = 1;break;}
 	}
 	if(!flag) return -1;
 	inode wrInode;
 	strcpy(wrInode.name,filename);
 	wrInode.id = fs_free;
-	wrInode.nblocks = 1;
+	int fsize = 0;
+	for(i=0;((unsigned char*)block)[i] != STREAM_DELIM;i++);
+	fsize = i;
+	wrInode.nblocks = ceil(fsize*1.0/BLK_SIZE);
+	space_free = GetBlockArray(fileSystemID,wrInode.nblocks);
+	if(space_free == -1) return -1; 
 	wrInode.first_blk = space_free;
-	wrInode.file_size = BLK_SIZE;
+	wrInode.file_size = fsize;
 	set_bit(&inode_bitmap,fs_free);
-	set_bit(&data_bitmap,space_free);
-	if((ret=writeData(fileSystemID,space_free,block)) > 0)
+	lseek(fileSystemID,wrInode.first_blk*BLK_SIZE,SEEK_SET);
+	if(write(fileSystemID,block,fsize) > 0)
 	{
 		writeInode(fileSystemID,&wrInode);
+		for(i=wrInode.first_blk;i<wrInode.first_blk+wrInode.nblocks;i++) set_bit(&data_bitmap,i);
 		flushBitmap(&inode_bitmap,INODE_BITMAP_BLK,fileSystemID);
 		flushBitmap(&data_bitmap,DATA_BITMAP_BLK,fileSystemID);
 	}
@@ -236,7 +267,7 @@ void print_FileList(int fileSystemID)
 	{
 		inode* in;
 		readInode(fileSystemID,i,&in);
-		printf("%s,%d bytes @ block %d\n",in->name,in->file_size,in->first_blk);
+		printf("%s,%d bytes @ block %d [ %d blocks ]\n",in->name,in->file_size,in->first_blk,in->nblocks);
 		free(in);
 	}
 }

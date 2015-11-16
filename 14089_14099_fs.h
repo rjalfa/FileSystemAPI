@@ -8,10 +8,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <math.h>
 #define SUPER_BLK 0
 #define DATA_BITMAP_BLK 1
 #define INODE_BITMAP_BLK 2
 #define INODE_BLK_ST 3
+#define STREAM_DELIM 0
 unsigned int BLK_SIZE;
 unsigned int INODE_SIZE;
 unsigned int BITMAP_SIZE;
@@ -73,4 +75,5 @@ void print_FileList(int fileSystemId);
 //Support Functions
 void print_bits(unsigned int x);
 void loadSuperBlock(int fileSystemId);
+int GetBlockArray(int disk,int nblocks);
 #endif
