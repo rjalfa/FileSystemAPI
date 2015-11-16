@@ -136,6 +136,19 @@ int writeData(int fileSystemID, int blockNum, void* block)
 	return ret;
 }
 
+int FindAndSetDataBlock(int fileSystemID)
+{
+	//Assuming Superblock variables are loaded
+	if(!FREE_BLK_CNT) return -1;
+	int 
+	for(i=0;i<BITMAP_SIZE;i++) if(check_bit(&data_bitmap,i) && ) 
+	{
+		readInode(fileSystemID,i,&in);
+		if(strcmp(in->name,filename)==0) {flag = 1;break;}
+		else free(in);
+	}
+}
+
 int createSFS(char* filename,int nbytes)
 {
 	int i,fileSystemID = open(filename,O_RDWR);
@@ -182,8 +195,9 @@ int readFile(int fileSystemID,char* filename,void* block)
 		if(strcmp(in->name,filename)==0) {flag = 1;break;}
 		else free(in);
 	}
-	if(flag) return readData(fileSystemID,in->first_blk,block);
-	else return -1;
+	if(!flag) return -1;
+	void* temp_block = malloc(BLK_SIZE),temp_buffer = malloc()
+	readData(fileSystemID,in->first_blk,block);
 }
 
 /*int writeFile(int fileSystemID,char* filename,void* block)
@@ -230,6 +244,7 @@ int writeFileExisting(int fileSystemID,inode* Inode,void* block)
 
 int writeFileNew(int fileSystemID,inode* Inode,void* block)
 {
+	if(FREE_INODE_CNT && FREE_BLK_CNT) return -1;
 	int i = 0;
 	int fsize = 0;
 	for(i=0;((unsigned char*)block)[i] != STREAM_DELIM;i++);
@@ -243,11 +258,16 @@ int writeFileNew(int fileSystemID,inode* Inode,void* block)
 	inode wrInode;
 	strcpy(wrInode.name,filename);
 	wrInode.id = fs_free;
-	wrInode.nblocks = ceil(fsize*1.0/(BLK_SIZE-4));
+	wrInode.nblocks = ceil(fsize*1.0/(BLK_SIZE));
 	//wrInode.first_blk = space_free;
+	int written_blocks = 0;
+	while(written_blocks <= wrInode.nblocks)
+	{
+		FindAndSetDataBlock(fileSystemID);	
+		written_blocks++;
+	}
 	wrInode.file_size = fsize;
 	set_bit(&inode_bitmap,fs_free);
-
 }
 
 int writeFile(int fileSystemID,char* filename,void* block)
